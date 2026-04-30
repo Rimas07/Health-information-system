@@ -11,7 +11,7 @@ RUN npm run build --prefix frontend
 
 # Install backend deps and build
 COPY His/package*.json ./His/
-RUN npm ci --prefix His
+RUN npm ci --prefix His --legacy-peer-deps
 
 COPY His/ ./His/
 RUN npm run build --prefix His
