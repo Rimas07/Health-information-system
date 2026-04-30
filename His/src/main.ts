@@ -1,8 +1,26 @@
+import { join } from 'path';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
-import { LimitsContextInterceptor } from './limits/limits.interceptor';// limits interceptor
-import { Logger, ValidationPipe } from '@nestjs/common';
+import { LimitsContextInterceptor } from './limits/limits.interceptor';
+import { Logger, ValidationPipe, NotFoundException, Catch, ArgumentsHost } from '@nestjs/common';
+import type { ExceptionFilter } from '@nestjs/common';
+import type { Request, Response } from 'express';
+
+@Catch(NotFoundException)
+class SpaFilter implements ExceptionFilter {
+  catch(exception: NotFoundException, host: ArgumentsHost) {
+    const ctx = host.switchToHttp();
+    const req = ctx.getRequest<Request>();
+    const res = ctx.getResponse<Response>();
+    const isApi = /^\/(auth|tenants|patients|audit|limits|api|proxy|metrics|monitoring)/.test(req.url);
+    if (isApi) {
+      res.status(404).json(exception.getResponse());
+    } else {
+      res.sendFile(join(__dirname, '..', 'public', 'index.html'));
+    }
+  }
+}
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import { MonitoringService } from './monitoring/monitoring.service';
@@ -15,6 +33,8 @@ async function bootstrap() {
 
   const configService = app.get(ConfigService);
   const monitoringService = app.get(MonitoringService);
+  app.useStaticAssets(join(__dirname, '..', 'public'));
+  app.useGlobalFilters(new SpaFilter());
   app.useGlobalInterceptors(new MonitoringInterceptor(monitoringService));
   app.enableCors({
     origin: true, 

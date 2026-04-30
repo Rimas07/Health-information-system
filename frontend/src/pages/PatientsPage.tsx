@@ -78,7 +78,7 @@ export default function PatientsPage() {
   }
 
   const filtered = patients.filter(p =>
-    p.name.toLowerCase().includes(search.toLowerCase()) ||
+    (p.name ?? '').toLowerCase().includes(search.toLowerCase()) ||
     (p.email ?? '').toLowerCase().includes(search.toLowerCase())
   )
 
