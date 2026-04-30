@@ -1,5 +1,7 @@
+import { join } from 'path';
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { ServeStaticModule } from '@nestjs/serve-static';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -49,6 +51,11 @@ import { ProxyController } from './proxy/proxy.controller';
       inject: [ConfigService],
     }),
 
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'public'),
+      exclude: ['/auth*', '/tenants*', '/patients*', '/audit*', '/limits*', '/api*', '/proxy*', '/monitoring*'],
+      serveStaticOptions: { index: false },
+    }),
     MonitoringModule,
     TenantsModule,
     PatientsModule,
