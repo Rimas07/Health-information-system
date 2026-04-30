@@ -53,8 +53,7 @@ import { ProxyController } from './proxy/proxy.controller';
 
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'public'),
-      exclude: ['/auth*', '/tenants*', '/patients*', '/audit*', '/limits*', '/api*', '/proxy*', '/monitoring*'],
-      serveStaticOptions: { index: false },
+      renderPath: '/',
     }),
     MonitoringModule,
     TenantsModule,
