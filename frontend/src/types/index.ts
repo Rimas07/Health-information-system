@@ -1,12 +1,9 @@
 export interface Patient {
   _id: string
   name: string
-  dateOfBirth: string
-  gender: string
-  phone?: string
-  email?: string
-  address?: string
-  createdAt: string
+  surname: string
+  age: number
+  createdAt?: string
 }
 
 export interface AuditEvent {

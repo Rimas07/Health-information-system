@@ -8,19 +8,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 
 interface PatientForm {
   name: string
-  dateOfBirth: string
-  gender: string
-  phone: string
-  email: string
-  address: string
+  surname: string
+  age: string
 }
 
-const empty: PatientForm = { name: '', dateOfBirth: '', gender: 'male', phone: '', email: '', address: '' }
+const empty: PatientForm = { name: '', surname: '', age: '' }
 
 export default function PatientsPage() {
   const qc = useQueryClient()
@@ -35,13 +31,14 @@ export default function PatientsPage() {
   })
 
   const createMutation = useMutation({
-    mutationFn: (data: PatientForm) => apiClient.post('/patients', data),
+    mutationFn: (data: PatientForm) =>
+      apiClient.post('/patients', { ...data, age: Number(data.age) }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['patients'] }); closeForm() },
   })
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: PatientForm }) =>
-      apiClient.patch(`/patients/${id}`, data),
+      apiClient.put(`/patients/${id}`, { ...data, age: Number(data.age) }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['patients'] }); closeForm() },
   })
 
@@ -58,7 +55,7 @@ export default function PatientsPage() {
 
   function openEdit(p: Patient) {
     setEditing(p)
-    setForm({ name: p.name, dateOfBirth: p.dateOfBirth, gender: p.gender, phone: p.phone ?? '', email: p.email ?? '', address: p.address ?? '' })
+    setForm({ name: p.name, surname: p.surname, age: String(p.age) })
     setShowForm(true)
   }
 
@@ -79,7 +76,7 @@ export default function PatientsPage() {
 
   const filtered = patients.filter(p =>
     (p.name ?? '').toLowerCase().includes(search.toLowerCase()) ||
-    (p.email ?? '').toLowerCase().includes(search.toLowerCase())
+    (p.surname ?? '').toLowerCase().includes(search.toLowerCase())
   )
 
   return (
@@ -98,7 +95,7 @@ export default function PatientsPage() {
       <div className="mb-4 relative">
         <Search size={16} className="absolute left-3 top-3 text-slate-400" />
         <Input
-          placeholder="Поиск по имени или email..."
+          placeholder="Поиск по имени или фамилии..."
           value={search}
           onChange={e => setSearch(e.target.value)}
           className="pl-9"
@@ -113,42 +110,42 @@ export default function PatientsPage() {
         >
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">{editing ? 'Редактировать пациента' : 'Новый пациент'}</CardTitle>
+              <CardTitle className="text-base">
+                {editing ? 'Редактировать пациента' : 'Новый пациент'}
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4">
+              <form onSubmit={handleSubmit} className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label>Имя *</Label>
-                  <Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} required />
+                  <Input
+                    placeholder="Иван"
+                    value={form.name}
+                    onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                    required
+                  />
                 </div>
                 <div className="space-y-2">
-                  <Label>Дата рождения *</Label>
-                  <Input type="date" value={form.dateOfBirth} onChange={e => setForm(f => ({ ...f, dateOfBirth: e.target.value }))} required />
+                  <Label>Фамилия *</Label>
+                  <Input
+                    placeholder="Иванов"
+                    value={form.surname}
+                    onChange={e => setForm(f => ({ ...f, surname: e.target.value }))}
+                    required
+                  />
                 </div>
                 <div className="space-y-2">
-                  <Label>Пол *</Label>
-                  <select
-                    value={form.gender}
-                    onChange={e => setForm(f => ({ ...f, gender: e.target.value }))}
-                    className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950"
-                  >
-                    <option value="male">Мужской</option>
-                    <option value="female">Женский</option>
-                  </select>
+                  <Label>Возраст *</Label>
+                  <Input
+                    type="number"
+                    placeholder="30"
+                    min={0}
+                    value={form.age}
+                    onChange={e => setForm(f => ({ ...f, age: e.target.value }))}
+                    required
+                  />
                 </div>
-                <div className="space-y-2">
-                  <Label>Телефон</Label>
-                  <Input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} />
-                </div>
-                <div className="space-y-2">
-                  <Label>Email</Label>
-                  <Input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
-                </div>
-                <div className="space-y-2">
-                  <Label>Адрес</Label>
-                  <Input value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} />
-                </div>
-                <div className="col-span-2 flex gap-3 justify-end">
+                <div className="col-span-3 flex gap-3 justify-end">
                   <Button type="button" variant="outline" onClick={closeForm}>Отмена</Button>
                   <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
                     {editing ? 'Сохранить' : 'Создать'}
@@ -171,10 +168,8 @@ export default function PatientsPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Имя</TableHead>
-                  <TableHead>Дата рождения</TableHead>
-                  <TableHead>Пол</TableHead>
-                  <TableHead>Телефон</TableHead>
-                  <TableHead>Email</TableHead>
+                  <TableHead>Фамилия</TableHead>
+                  <TableHead>Возраст</TableHead>
                   <TableHead className="w-24">Действия</TableHead>
                 </TableRow>
               </TableHeader>
@@ -188,14 +183,8 @@ export default function PatientsPage() {
                     className="border-b border-slate-100 hover:bg-slate-50 transition-colors"
                   >
                     <TableCell className="font-medium">{p.name}</TableCell>
-                    <TableCell>{new Date(p.dateOfBirth).toLocaleDateString('ru')}</TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">
-                        {p.gender === 'male' ? 'Муж' : 'Жен'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-slate-500">{p.phone ?? '—'}</TableCell>
-                    <TableCell className="text-slate-500">{p.email ?? '—'}</TableCell>
+                    <TableCell>{p.surname}</TableCell>
+                    <TableCell>{p.age} лет</TableCell>
                     <TableCell>
                       <div className="flex gap-2">
                         <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEdit(p)}>
