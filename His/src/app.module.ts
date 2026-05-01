@@ -17,6 +17,7 @@ import { ProxyModule } from './proxy/proxy.module';
 import { LimitsModule } from './limits/limits.module';
 import { TenantsMiddleware } from './middlewares/tenants.middleware';
 import { LimitsController } from './limits/limits.controller';
+import { PatientsController } from './patients/patients.controller';
 import { MonitoringModule } from './monitoring/monitoring.module';
 import { ProxyController } from './proxy/proxy.controller';
 
@@ -69,6 +70,6 @@ export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer
       .apply(TenantsMiddleware)
-      .forRoutes(LimitsController, ProxyController);
+      .forRoutes(LimitsController, ProxyController, PatientsController);
   }
 }

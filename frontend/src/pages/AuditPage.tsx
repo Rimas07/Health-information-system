@@ -28,8 +28,8 @@ export default function AuditPage() {
   })
 
   const filtered = events.filter(e =>
-    e.eventType.toLowerCase().includes(search.toLowerCase()) ||
-    e.tenantId.toLowerCase().includes(search.toLowerCase()) ||
+    (e.eventType ?? '').toLowerCase().includes(search.toLowerCase()) ||
+    (e.tenantId ?? '').toLowerCase().includes(search.toLowerCase()) ||
     (e.details ?? '').toLowerCase().includes(search.toLowerCase())
   )
 
