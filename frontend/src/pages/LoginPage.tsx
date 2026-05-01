@@ -37,7 +37,7 @@ export default function LoginPage() {
         email: loginEmail,
         password: loginPassword,
       })
-      localStorage.setItem('access_token', data.access_token)
+      localStorage.setItem('access_token', data.accessToken)
       localStorage.setItem('tenant_id', data.tenantId)
       navigate('/dashboard')
     } catch {

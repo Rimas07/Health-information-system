@@ -28,7 +28,7 @@ export interface DashboardStats {
 }
 
 export interface AuthResponse {
-  access_token: string
+  accessToken: string
   tenantId: string
 }
 
