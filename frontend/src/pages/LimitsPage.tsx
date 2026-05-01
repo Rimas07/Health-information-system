@@ -1,100 +1,221 @@
-import { useQuery } from '@tanstack/react-query'
+import { useState, useEffect } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import { apiClient } from '@/api/client'
-import type { RateLimit } from '@/types'
+import type { DataLimit, DataUsage } from '@/types'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+
+function ProgressBar({ value, max, color }: { value: number; max: number; color: string }) {
+  const pct = max > 0 ? Math.min((value / max) * 100, 100) : 0
+  const danger = pct >= 90
+  return (
+    <div className="mt-2">
+      <div className="flex justify-between text-xs text-slate-500 mb-1">
+        <span>{value.toLocaleString()}</span>
+        <span>{pct.toFixed(1)}% из {max.toLocaleString()}</span>
+      </div>
+      <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+        <div
+          className={`h-full rounded-full transition-all ${danger ? 'bg-red-500' : color}`}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+    </div>
+  )
+}
 
 export default function LimitsPage() {
-  const { data: limits = [], isLoading } = useQuery<RateLimit[]>({
-    queryKey: ['limits'],
-    queryFn: () => apiClient.get('/limits').then(r => r.data),
+  const qc = useQueryClient()
+  const tenantId = localStorage.getItem('tenant_id') ?? ''
+  const [editing, setEditing] = useState(false)
+  const [form, setForm] = useState({ maxDocuments: 1000, maxDataSizeKB: 51200, monthlyQueries: 1000 })
+
+  const { data: limits, isLoading: limitsLoading } = useQuery<DataLimit>({
+    queryKey: ['limits', tenantId],
+    queryFn: () => apiClient.get(`/limits/${tenantId}`).then(r => r.data),
+    enabled: !!tenantId,
   })
+
+  const { data: usage, isLoading: usageLoading } = useQuery<DataUsage>({
+    queryKey: ['limits-usage', tenantId],
+    queryFn: () => apiClient.get(`/limits/usage/${tenantId}`).then(r => r.data),
+    enabled: !!tenantId,
+    refetchInterval: 30000,
+  })
+
+  useEffect(() => {
+    if (limits) {
+      setForm({
+        maxDocuments: limits.maxDocuments,
+        maxDataSizeKB: limits.maxDataSizeKB,
+        monthlyQueries: limits.monthlyQueries,
+      })
+    }
+  }, [limits])
+
+  const updateMutation = useMutation({
+    mutationFn: (data: typeof form) => apiClient.put(`/limits/${tenantId}`, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['limits', tenantId] })
+      setEditing(false)
+    },
+  })
+
+  const isLoading = limitsLoading || usageLoading
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-slate-400 text-sm">Загрузка...</div>
+      </div>
+    )
+  }
 
   return (
     <div className="p-8">
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold text-slate-800">Лимиты запросов</h2>
-        <p className="text-slate-500 text-sm mt-1">Настройки rate limiting по tenant</p>
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-800">Лимиты</h2>
+          <p className="text-slate-500 text-sm mt-1">Использование ресурсов вашей организации</p>
+        </div>
+        <Button variant={editing ? 'outline' : 'default'} onClick={() => setEditing(e => !e)}>
+          {editing ? 'Отмена' : 'Изменить лимиты'}
+        </Button>
       </div>
 
+      {/* Usage cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0 }}>
-          <Card>
-            <CardContent className="p-6">
-              <p className="text-sm text-slate-500">Всего правил</p>
-              <p className="text-3xl font-bold text-slate-800 mt-1">{limits.length}</p>
-            </CardContent>
-          </Card>
-        </motion.div>
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-          <Card>
-            <CardContent className="p-6">
-              <p className="text-sm text-slate-500">Уникальных endpoint</p>
-              <p className="text-3xl font-bold text-slate-800 mt-1">
-                {new Set(limits.map(l => l.endpoint)).size}
-              </p>
-            </CardContent>
-          </Card>
-        </motion.div>
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-          <Card>
-            <CardContent className="p-6">
-              <p className="text-sm text-slate-500">Уникальных tenant</p>
-              <p className="text-3xl font-bold text-slate-800 mt-1">
-                {new Set(limits.map(l => l.tenantId)).size}
-              </p>
-            </CardContent>
-          </Card>
-        </motion.div>
+        {[
+          {
+            label: 'Документы',
+            icon: '📄',
+            value: usage?.documentsCount ?? 0,
+            max: limits?.maxDocuments ?? 1000,
+            color: 'bg-blue-500',
+            delay: 0,
+          },
+          {
+            label: 'Размер данных',
+            icon: '💾',
+            value: usage?.dataSizeKB ?? 0,
+            max: limits?.maxDataSizeKB ?? 51200,
+            color: 'bg-violet-500',
+            delay: 0.1,
+            unit: 'KB',
+          },
+          {
+            label: 'Запросов в месяц',
+            icon: '⚡',
+            value: usage?.queriesCount ?? 0,
+            max: limits?.monthlyQueries ?? 1000,
+            color: 'bg-emerald-500',
+            delay: 0.2,
+          },
+        ].map(({ label, icon, value, max, color, delay, unit }) => (
+          <motion.div
+            key={label}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay, duration: 0.4 }}
+          >
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-1">
+                  <p className="text-sm text-slate-500">{label}</p>
+                  <span className="text-xl">{icon}</span>
+                </div>
+                <p className="text-2xl font-bold text-slate-800">
+                  {value.toLocaleString()}{unit ? ` ${unit}` : ''}
+                </p>
+                <ProgressBar value={value} max={max} color={color} />
+              </CardContent>
+            </Card>
+          </motion.div>
+        ))}
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Правила лимитирования</CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          {isLoading ? (
-            <div className="text-center py-12 text-slate-400 text-sm">Загрузка...</div>
-          ) : limits.length === 0 ? (
-            <div className="text-center py-12 text-slate-400 text-sm">Правила не настроены</div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Tenant</TableHead>
-                  <TableHead>Endpoint</TableHead>
-                  <TableHead>Макс. запросов</TableHead>
-                  <TableHead>Окно (мс)</TableHead>
-                  <TableHead>Создан</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {limits.map((limit, i) => (
-                  <motion.tr
-                    key={limit._id}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: i * 0.03 }}
-                    className="border-b border-slate-100 hover:bg-slate-50 transition-colors"
-                  >
-                    <TableCell className="font-medium">{limit.tenantId}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{limit.endpoint}</Badge>
-                    </TableCell>
-                    <TableCell className="text-slate-700">{limit.maxRequests}</TableCell>
-                    <TableCell className="text-slate-500">{(limit.windowMs / 1000).toFixed(0)}с</TableCell>
-                    <TableCell className="text-slate-400 text-sm">
-                      {new Date(limit.createdAt).toLocaleDateString('ru')}
-                    </TableCell>
-                  </motion.tr>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+      {/* Edit form */}
+      {editing && (
+        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Изменить лимиты</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form
+                onSubmit={e => { e.preventDefault(); updateMutation.mutate(form) }}
+                className="grid grid-cols-3 gap-6"
+              >
+                <div className="space-y-2">
+                  <Label>Макс. документов</Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    value={form.maxDocuments}
+                    onChange={e => setForm(f => ({ ...f, maxDocuments: +e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Макс. размер (KB)</Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    value={form.maxDataSizeKB}
+                    onChange={e => setForm(f => ({ ...f, maxDataSizeKB: +e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Запросов в месяц</Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    value={form.monthlyQueries}
+                    onChange={e => setForm(f => ({ ...f, monthlyQueries: +e.target.value }))}
+                  />
+                </div>
+                <div className="col-span-3 flex justify-end gap-3">
+                  <Button type="button" variant="outline" onClick={() => setEditing(false)}>
+                    Отмена
+                  </Button>
+                  <Button type="submit" disabled={updateMutation.isPending}>
+                    {updateMutation.isPending ? 'Сохранение...' : 'Сохранить'}
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
+
+      {/* Current limits summary */}
+      {!editing && limits && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Текущие лимиты</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-3 gap-4 text-sm">
+                <div className="bg-slate-50 rounded-lg p-4">
+                  <p className="text-slate-500">Документы</p>
+                  <p className="text-xl font-bold text-slate-800 mt-1">{limits.maxDocuments.toLocaleString()}</p>
+                </div>
+                <div className="bg-slate-50 rounded-lg p-4">
+                  <p className="text-slate-500">Размер данных</p>
+                  <p className="text-xl font-bold text-slate-800 mt-1">{limits.maxDataSizeKB.toLocaleString()} KB</p>
+                </div>
+                <div className="bg-slate-50 rounded-lg p-4">
+                  <p className="text-slate-500">Запросов в месяц</p>
+                  <p className="text-xl font-bold text-slate-800 mt-1">{limits.monthlyQueries.toLocaleString()}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
     </div>
   )
 }

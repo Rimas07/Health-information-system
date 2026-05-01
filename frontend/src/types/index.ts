@@ -40,11 +40,16 @@ export interface Tenant {
   createdAt: string
 }
 
-export interface RateLimit {
-  _id: string
+export interface DataLimit {
   tenantId: string
-  endpoint: string
-  maxRequests: number
-  windowMs: number
-  createdAt: string
+  maxDocuments: number
+  maxDataSizeKB: number
+  monthlyQueries: number
+}
+
+export interface DataUsage {
+  tenantId: string
+  documentsCount: number
+  dataSizeKB: number
+  queriesCount: number
 }
