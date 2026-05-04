@@ -1,0 +1,15 @@
+{
+  "name": "his-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "npm ci --prefix frontend && npm run build --prefix frontend && npm ci --prefix His --include=dev && npm run build --prefix His",
+    "start": "node His/dist/main",
+    "backend": "npm run dev --prefix His",
+    "frontend": "npm run dev --prefix frontend",
+    "dev": "concurrently --names \"BACK,FRONT\" --prefix-colors \"blue,green\" \"npm run backend\" \"npm run frontend\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
