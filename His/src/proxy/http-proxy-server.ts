@@ -44,6 +44,7 @@ export class HttpProxyServer {
 
         this.app = express();
         this.app.use(express.json());
+
         this.setupProxy();
     }
 
@@ -88,6 +89,7 @@ export class HttpProxyServer {
                     statusCode = 403;
                     return res.status(403).json(limitsResult);
                 }
+                this.validateQuerySafety(req.body);
                 const modifiedBody = this.modifyRequest(req, authResult.tenantId);
 
                 const mongoResponse = await this.forwardToMongoDB(req, authResult.tenantId, modifiedBody);
@@ -98,12 +100,12 @@ export class HttpProxyServer {
 
             } catch (error) {
                 console.error('❌ [HTTP Proxy] Error:', error);
-                statusCode = error.status || 500;
+                statusCode = (error as any).status || 500;
                 await this.logRequest(req, tenantId, null, startTime, statusCode);
                 res.status(statusCode).json({
                     success: false,
                     error: 'Proxy error',
-                    message: error.message
+                    message: (error as Error).message
                 });
             } finally {
 
@@ -143,56 +145,40 @@ export class HttpProxyServer {
 
     private async checkAuthentication(req: express.Request) {
         try {
-            if (!req.headers) {
-                console.error('❌ [Proxy] req.headers is undefined');
-                return { success: false, error: 'Request headers are missing' };
-            }
-
-           
-            const headerTenantId = (req.headers['x-tenant-id'] ||
-                req.headers['X-TENANT-ID'] ||
-                req.headers['X-Tenant-ID']) as string;
-
-            if (headerTenantId) {
-                console.log(`🔍 [Proxy] Uses tenantId from header: ${headerTenantId}`);
-                const tenant = await this.tenantsService.getTenantById(headerTenantId);
-                if (tenant) {
-                    return {
-                        success: true,
-                        tenantId: headerTenantId,
-                        userId: 'from-header',
-                        source: 'header'
-                    };
-                } else {
-                    console.log(`⚠️ [Proxy] Tenant not found: ${headerTenantId}`);
-                }
-            }
-
-          
+            // JWT is always required — X-TENANT-ID alone is not sufficient for auth
             const authHeader = req.headers.authorization;
             if (!authHeader || !authHeader.startsWith('Bearer ')) {
-                return { success: false, error: 'No valid token provided. Use Authorization: Bearer <token> or X-Tenant-ID header' };
+                return { success: false, error: 'Authorization header missing. Use: Authorization: Bearer <token>' };
             }
 
             const token = authHeader.substring(7);
 
-            
             const validationResult = await this.authService.validateToken(token);
-
-            if (validationResult.success) {
-                console.log(`🔍 [Proxy] The tenantId from the JWT token is used: ${validationResult.tenantId}`);
-                return {
-                    success: true,
-                    tenantId: validationResult.tenantId,
-                    userId: validationResult.userId,
-                    source: 'jwt-token'
-                };
+            if (!validationResult.success) {
+                return { success: false, error: validationResult.error || 'Invalid token' };
             }
 
-            return { success: false, error: validationResult.error || 'Invalid token' };
+            // If X-TENANT-ID header is present it must match the tenant encoded in the JWT
+            const headerTenantId = (
+                req.headers['x-tenant-id'] ||
+                req.headers['X-TENANT-ID'] ||
+                req.headers['X-Tenant-ID']
+            ) as string;
+
+            if (headerTenantId && headerTenantId !== validationResult.tenantId) {
+                return { success: false, error: 'X-TENANT-ID header does not match token tenantId' };
+            }
+
+            console.log(`🔍 [Proxy] JWT validated, tenantId: ${validationResult.tenantId}`);
+            return {
+                success: true,
+                tenantId: validationResult.tenantId,
+                userId: validationResult.userId,
+                source: 'jwt-token'
+            };
         } catch (error) {
             console.error('❌ [Proxy] Authentication error:', error);
-            return { success: false, error: `Authentication failed: ${error.message}` };
+            return { success: false, error: `Authentication failed: ${(error as Error).message}` };
         }
     }
 
@@ -225,7 +211,7 @@ export class HttpProxyServer {
 
             return { success: true };
         } catch (error) {
-            console.log('❌ [Limits] LIMIT EXCEEDED:', error.message);
+            console.log('❌ [Limits] LIMIT EXCEEDED:', (error as Error).message);
             return {
                 success: false,
                 error: 'Data limit exceeded',
@@ -504,7 +490,18 @@ export class HttpProxyServer {
         };
         return mapping[operation] || 'PATIENT_READ';
     }
+ private validateQuerySafety(body: any): void {
+     const DANGEROUS_OPERATORS = ['$where', '$function', '$accumulator', '$expr'];
+     const bodyString = JSON.stringify(body);
 
+     for (const op of DANGEROUS_OPERATORS) {
+         if (bodyString.includes(op)) {
+             throw new Error(`Forbidden operator: ${op}`);
+         }
+     }
+     
+ 
+ }
     private detectOperation(req: express.Request) {
         const operation = req.method === 'GET' ? 'find' : (req.body.operation || 'find');
         let documents = 0;
@@ -612,6 +609,7 @@ export class HttpProxyServer {
                 Object.defineProperty(req, 'path', { value: originalPath, writable: true, configurable: true });
                 return res.status(403).json(limitsResult);
             }
+             this.validateQuerySafety(req.body)
             const modifiedBody = this.modifyRequest(req, authResult.tenantId);
 
             const mongoResponse = await this.forwardToMongoDB(req, authResult.tenantId, modifiedBody);
@@ -622,13 +620,13 @@ export class HttpProxyServer {
 
         } catch (error) {
             console.error('❌ [HTTP Proxy] Error:', error);
-            statusCode = error.status || 500;
+            statusCode = (error as any).status || 500;
             Object.defineProperty(req, 'path', { value: originalPath, writable: true, configurable: true });
             await this.logRequest(req, tenantId, null, startTime, statusCode);
             res.status(statusCode).json({
                 success: false,
                 error: 'Proxy error',
-                message: error.message
+                message: (error as Error).message
             });
         } finally {
             Object.defineProperty(req, 'path', { value: originalPath, writable: true, configurable: true });

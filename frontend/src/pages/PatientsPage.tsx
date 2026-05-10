@@ -27,23 +27,32 @@ export default function PatientsPage() {
 
   const { data: patients = [], isLoading } = useQuery<Patient[]>({
     queryKey: ['patients'],
-    queryFn: () => apiClient.get('/patients').then(r => r.data),
+    queryFn: () =>
+      apiClient.post('/proxy/mongo/patients', { operation: 'find' }).then(r => r.data.data),
   })
 
   const createMutation = useMutation({
     mutationFn: (data: PatientForm) =>
-      apiClient.post('/patients', { ...data, age: Number(data.age) }),
+      apiClient.post('/proxy/mongo/patients', {
+        operation: 'insertOne',
+        document: { ...data, age: Number(data.age) },
+      }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['patients'] }); closeForm() },
   })
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: PatientForm }) =>
-      apiClient.put(`/patients/${id}`, { ...data, age: Number(data.age) }),
+      apiClient.post('/proxy/mongo/patients', {
+        operation: 'updateOne',
+        id,
+        data: { ...data, age: Number(data.age) },
+      }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['patients'] }); closeForm() },
   })
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => apiClient.delete(`/patients/${id}`),
+    mutationFn: (id: string) =>
+      apiClient.post('/proxy/mongo/patients', { operation: 'deleteOne', id }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['patients'] }),
   })
 

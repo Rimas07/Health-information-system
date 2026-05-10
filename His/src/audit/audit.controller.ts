@@ -47,7 +47,7 @@ export class AuditController {
                 
                 } catch (error) {
                 
-                    console.error(`❌ Error counting patients for tenant ${tenant.tenantId}:`, error.message);
+                    console.error(`❌ Error counting patients for tenant ${tenant.tenantId}:`, (error as Error).message);
                 }
             }
 
@@ -79,7 +79,7 @@ export class AuditController {
                 totalAuditEvents: 0,
                 recentEvents: [],
                 systemStatus: 'error',
-                error: error.message,
+                error: (error as Error).message,
                 lastUpdated: new Date()
             };
         }

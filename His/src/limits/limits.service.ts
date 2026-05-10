@@ -316,7 +316,15 @@ export class LimitsService {
         if (!updatedUsage) {
             const currentUsage = await this.usageModel.findOne({ tenantId }).exec() ||
                 await this.usageModel.create({ tenantId });
-
+            if (currentUsage.queriesCount + 1 <= limit.monthlyQueries) {
+                await this.usageModel.findOneAndUpdate(
+                    { tenantId },
+                    { $inc: { queriesCount: 1 }, },
+                    { upsert: true }
+                ).exec();
+                return;
+    
+}
             const percentage = Math.round(
                 ((currentUsage.queriesCount + 1) / limit.monthlyQueries) * 100
             );

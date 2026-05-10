@@ -4,10 +4,10 @@ import { Document } from "mongoose";
 @Schema()
 export class Patient extends Document {
     @Prop({ required: true })
-    name: string;
+    name!: string;
     @Prop({ required: true })
-    surname: string;
+    surname!: string;
     @Prop({ required: true })
-    age: number;
+    age!: number;
 }
 export const PatientSchema = SchemaFactory.createForClass(Patient);

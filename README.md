@@ -137,6 +137,70 @@ flowchart TD
 
 ---
 
+## How the proxy works
+
+The proxy is **not** a traditional HTTP reverse proxy (like nginx). It is a custom Express server that acts as a controlled access layer to MongoDB.
+
+```mermaid
+sequenceDiagram
+    actor Client
+    participant Proxy as Proxy Server\nport 3001
+    participant Auth as Auth check
+    participant Limits as Limits check
+    participant Modifier as Request modifier
+    participant Mongo as MongoDB\ntenant_abc123
+
+    Client->>Proxy: POST /mongo/patients\n{"operation":"insertOne","document":{...}}
+
+    Note over Proxy: Rate limit: 10 req/min per IP
+
+    Proxy->>Auth: X-TENANT-ID header OR Bearer JWT
+    Auth-->>Proxy: tenantId resolved
+
+    Proxy->>Limits: checkQueriesLimit(tenantId)
+    Limits-->>Proxy: OK
+
+    Proxy->>Limits: checkDocumentsLimit(tenantId, +1)
+    Limits-->>Proxy: OK
+
+    Proxy->>Limits: checkDataSizeLimit(tenantId, bodyKB)
+    Limits-->>Proxy: OK
+
+    Proxy->>Modifier: inject tenantId into filter\ncap limit at 1000
+    Modifier-->>Proxy: modified body
+
+    Proxy->>Mongo: collection("patients").insertOne(document)
+    Mongo-->>Proxy: { _id, acknowledged }
+
+    Proxy-->>Client: { success: true, data: {...} }
+
+    Note over Proxy: Audit log + Prometheus metrics recorded
+```
+
+**Collection name from URL path** — `/mongo/patients` resolves to collection `patients`, `/mongo/records` to `records`. The proxy reads the last segment of the path.
+
+**Supported operations** — sent as `operation` field in the request body:
+
+| Operation | MongoDB call |
+|---|---|
+| `find` / `findMany` | `collection.find(filter)` with optional limit/skip/sort |
+| `findOne` / `findById` | `collection.findOne(filter)` |
+| `insertOne` / `create` | `collection.insertOne(document)` |
+| `insertMany` / `createMany` | `collection.insertMany(documents)` |
+| `updateOne` / `update` | `collection.updateOne(filter, update)` |
+| `updateMany` | `collection.updateMany(filter, update)` |
+| `deleteOne` / `delete` | `collection.deleteOne(filter)` |
+| `deleteMany` | `collection.deleteMany(filter)` |
+| `count` / `countDocuments` | `collection.countDocuments(filter)` |
+
+**Quota rules applied per operation type:**
+- Read operations (`find`, `findOne`, `count`) — only the monthly request counter is checked
+- Write operations (`insertOne`, `insertMany`) — all three limits are checked: document count, data size, monthly requests
+
+**Request modification before forwarding** — the proxy injects `tenantId` into every filter before hitting the database. This means even if a client sends `{ "filter": {} }`, the actual query becomes `{ "filter": { "tenantId": "abc123" } }`. The tenantId is then removed from the filter before executing so it does not leak into results.
+
+---
+
 ## Multi-tenancy data isolation
 
 ```mermaid

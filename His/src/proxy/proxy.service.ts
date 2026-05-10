@@ -12,7 +12,7 @@ import { MonitoringService } from '../monitoring/monitoring.service';
 
 @Injectable()
 export class ProxyService {
-    private httpProxyServer: HttpProxyServer;
+    private httpProxyServer!: HttpProxyServer;
 
     constructor(
         private authService: AuthService,
@@ -53,21 +53,7 @@ export class ProxyService {
         return this.httpProxyServer.handleRequest(req, res);
     }
 
-    public async validateToken(token: string) {
-        try {
-            const secretKey = await this.authService.fetchAccessTokenSecretSigningKey('default');
-            return {
-                success: true,
-                tenantId: 'tenant123',
-                userId: 'user456'
-            };
-        } catch (error) {
-            return {
-                success: false,
-                error: error.message
-            };
-        }
-    }
+  
 
     public async checkLimits(tenantId: string, operation: any) {
         try {
@@ -79,7 +65,7 @@ export class ProxyService {
         } catch (error) {
             return {
                 success: false,
-                error: error.message
+                error: (error as Error).message
             };
         }
     }
@@ -94,7 +80,7 @@ export class ProxyService {
         } catch (error) {
             return {
                 success: false,
-                error: error.message
+                error: (error as Error).message
             };
         }
     }
@@ -106,7 +92,7 @@ export class ProxyService {
         } catch (error) {
             return {
                 success: false,
-                error: error.message
+                error: (error as Error).message
             };
         }
     }
@@ -114,9 +100,10 @@ export class ProxyService {
     public async processRequest(req: any) {
         try {
            
-            const authResult = await this.validateToken(
+            const authResult = await this.authService.validateToken(
                 req.headers.authorization?.replace('Bearer ', '') || ''
             );
+
 
             if (!authResult.success) {
                 throw new Error(`Authentication failed: ${authResult.error}`);

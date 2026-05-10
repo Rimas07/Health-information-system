@@ -11,7 +11,7 @@
     })
     @IsString()
     @IsNotEmpty()
-    name: string;
+    name!: string;
 
     @ApiProperty({
       description: 'Patient last name',
@@ -20,7 +20,7 @@
     })
     @IsString()
     @IsNotEmpty()
-    surname: string;
+    surname!: string;
 
     @ApiProperty({
       description: 'Patient age',
@@ -31,7 +31,7 @@
     @Type(() => Number)
     @IsInt()
     @Min(0)
-    age: number;
+    age!: number;
   }
 
   export class UpdatePatientDto extends PartialType(CreatePatientDto) { }

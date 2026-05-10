@@ -4,13 +4,13 @@ import { Document } from "mongoose";
 @Schema()
 export class User extends Document {     
     @Prop({ required: true })
-    name: string
+    name!: string
     @Prop({ required: true, })
-    email: string
+    email!: string
     @Prop({ required: true })
-    password: string
+    password!: string
     @Prop({ required: true })
-    tenantId: string 
+    tenantId!: string 
 }  
 //field linking a user to a company
 //In a multi-tenant architecture, each user belongs to a specific company.
