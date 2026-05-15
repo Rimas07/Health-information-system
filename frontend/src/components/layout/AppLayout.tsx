@@ -1,7 +1,6 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { LayoutDashboard, Users, FileText, Settings, LogOut } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { Button } from '@/components/ui/button'
 import LanguageSwitcher from '@/components/ui/LanguageSwitcher'
 
 export default function AppLayout() {
