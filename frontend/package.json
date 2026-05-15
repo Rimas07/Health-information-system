@@ -15,9 +15,11 @@
     "@tanstack/react-query-devtools": "^5.100.6",
     "axios": "^1.15.2",
     "framer-motion": "^12.38.0",
+    "i18next": "^26.2.0",
     "lucide-react": "^1.14.0",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
+    "react-i18next": "^17.0.8",
     "react-router-dom": "^7.14.2"
   },
   "devDependencies": {

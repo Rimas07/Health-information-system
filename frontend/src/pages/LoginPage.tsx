@@ -1,25 +1,26 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
 import { apiClient } from '@/api/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import LanguageSwitcher from '@/components/ui/LanguageSwitcher'
 import type { AuthResponse } from '@/types'
 
 type Tab = 'login' | 'register'
 
 export default function LoginPage() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const [tab, setTab] = useState<Tab>('login')
 
-  // login state
   const [loginEmail, setLoginEmail] = useState('')
   const [loginPassword, setLoginPassword] = useState('')
   const [loginError, setLoginError] = useState('')
   const [loginLoading, setLoginLoading] = useState(false)
 
-  // register state
   const [regCompany, setRegCompany] = useState('')
   const [regName, setRegName] = useState('')
   const [regEmail, setRegEmail] = useState('')
@@ -41,7 +42,7 @@ export default function LoginPage() {
       localStorage.setItem('tenant_id', data.tenantId)
       navigate('/dashboard')
     } catch {
-      setLoginError('Неверный email или пароль')
+      setLoginError(t('login.error_credentials'))
     } finally {
       setLoginLoading(false)
     }
@@ -57,12 +58,12 @@ export default function LoginPage() {
         companyName: regCompany,
         user: { name: regName, email: regEmail, password: regPassword },
       })
-      setRegSuccess('Организация создана! Войдите с вашими данными.')
+      setRegSuccess(t('login.success_created'))
       setLoginEmail(regEmail)
       setTimeout(() => setTab('login'), 1500)
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
-      setRegError(Array.isArray(msg) ? msg[0] : (msg ?? 'Ошибка при регистрации'))
+      setRegError(Array.isArray(msg) ? msg[0] : (msg ?? t('login.error_register')))
     } finally {
       setRegLoading(false)
     }
@@ -79,23 +80,26 @@ export default function LoginPage() {
         <div className="bg-white rounded-2xl shadow-2xl p-8">
           <div className="text-center mb-6">
             <div className="text-4xl mb-3">🏥</div>
-            <h1 className="text-2xl font-bold text-slate-800">HIS System</h1>
-            <p className="text-slate-500 text-sm mt-1">Медицинская информационная система</p>
+            <h1 className="text-2xl font-bold text-slate-800">{t('app.title')}</h1>
+            <p className="text-slate-500 text-sm mt-1">{t('login.subtitle')}</p>
           </div>
 
-          {/* Tab switcher */}
+          <div className="flex justify-center mb-4">
+            <LanguageSwitcher />
+          </div>
+
           <div className="flex rounded-lg bg-slate-100 p-1 mb-6">
-            {(['login', 'register'] as Tab[]).map((t) => (
+            {(['login', 'register'] as Tab[]).map((t_tab) => (
               <button
-                key={t}
-                onClick={() => setTab(t)}
+                key={t_tab}
+                onClick={() => setTab(t_tab)}
                 className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${
-                  tab === t
+                  tab === t_tab
                     ? 'bg-white text-slate-800 shadow-sm'
                     : 'text-slate-500 hover:text-slate-700'
                 }`}
               >
-                {t === 'login' ? 'Войти' : 'Регистрация'}
+                {t_tab === 'login' ? t('login.tab_login') : t('login.tab_register')}
               </button>
             ))}
           </div>
@@ -112,7 +116,7 @@ export default function LoginPage() {
                 className="space-y-5"
               >
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">{t('login.email')}</Label>
                   <Input
                     id="email"
                     type="email"
@@ -123,7 +127,7 @@ export default function LoginPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="password">Пароль</Label>
+                  <Label htmlFor="password">{t('login.password')}</Label>
                   <Input
                     id="password"
                     type="password"
@@ -143,7 +147,7 @@ export default function LoginPage() {
                   </motion.p>
                 )}
                 <Button type="submit" className="w-full" disabled={loginLoading}>
-                  {loginLoading ? 'Вход...' : 'Войти'}
+                  {loginLoading ? t('login.signing_in') : t('login.sign_in')}
                 </Button>
               </motion.form>
             ) : (
@@ -157,7 +161,7 @@ export default function LoginPage() {
                 className="space-y-4"
               >
                 <div className="space-y-2">
-                  <Label htmlFor="company">Название организации</Label>
+                  <Label htmlFor="company">{t('login.company')}</Label>
                   <Input
                     id="company"
                     placeholder="City Hospital"
@@ -167,13 +171,13 @@ export default function LoginPage() {
                     maxLength={15}
                     required
                   />
-                  <p className="text-xs text-slate-400">2–15 символов</p>
+                  <p className="text-xs text-slate-400">{t('login.company_hint')}</p>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="reg-name">Ваше имя</Label>
+                  <Label htmlFor="reg-name">{t('login.your_name')}</Label>
                   <Input
                     id="reg-name"
-                    placeholder="Иван Иванов"
+                    placeholder="Ivan Ivanov"
                     value={regName}
                     onChange={(e) => setRegName(e.target.value)}
                     minLength={2}
@@ -181,7 +185,7 @@ export default function LoginPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="reg-email">Email администратора</Label>
+                  <Label htmlFor="reg-email">{t('login.admin_email')}</Label>
                   <Input
                     id="reg-email"
                     type="email"
@@ -192,11 +196,11 @@ export default function LoginPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="reg-password">Пароль</Label>
+                  <Label htmlFor="reg-password">{t('login.password')}</Label>
                   <Input
                     id="reg-password"
                     type="password"
-                    placeholder="Минимум 6 символов"
+                    placeholder={t('login.min_password')}
                     value={regPassword}
                     onChange={(e) => setRegPassword(e.target.value)}
                     minLength={6}
@@ -222,7 +226,7 @@ export default function LoginPage() {
                   </motion.p>
                 )}
                 <Button type="submit" className="w-full" disabled={regLoading}>
-                  {regLoading ? 'Создание...' : 'Создать организацию'}
+                  {regLoading ? t('login.creating') : t('login.create_org')}
                 </Button>
               </motion.form>
             )}

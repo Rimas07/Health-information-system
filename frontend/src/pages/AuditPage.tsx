@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import { Search } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { apiClient } from '@/api/client'
 import type { AuditEvent } from '@/types'
 import { Card, CardContent } from '@/components/ui/card'
@@ -19,6 +20,7 @@ const eventColors: Record<string, 'default' | 'secondary' | 'destructive'> = {
 }
 
 export default function AuditPage() {
+  const { t, i18n } = useTranslation()
   const [search, setSearch] = useState('')
 
   const { data: events = [], isLoading } = useQuery<AuditEvent[]>({
@@ -36,14 +38,14 @@ export default function AuditPage() {
   return (
     <div className="p-8">
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-slate-800">Журнал аудита</h2>
-        <p className="text-slate-500 text-sm mt-1">История всех действий в системе</p>
+        <h2 className="text-2xl font-bold text-slate-800">{t('audit.title')}</h2>
+        <p className="text-slate-500 text-sm mt-1">{t('audit.subtitle')}</p>
       </div>
 
       <div className="mb-4 relative">
         <Search size={16} className="absolute left-3 top-3 text-slate-400" />
         <Input
-          placeholder="Поиск по типу события, tenant..."
+          placeholder={t('audit.search')}
           value={search}
           onChange={e => setSearch(e.target.value)}
           className="pl-9"
@@ -53,18 +55,18 @@ export default function AuditPage() {
       <Card>
         <CardContent className="p-0">
           {isLoading ? (
-            <div className="text-center py-12 text-slate-400 text-sm">Загрузка...</div>
+            <div className="text-center py-12 text-slate-400 text-sm">{t('audit.loading')}</div>
           ) : filtered.length === 0 ? (
-            <div className="text-center py-12 text-slate-400 text-sm">События не найдены</div>
+            <div className="text-center py-12 text-slate-400 text-sm">{t('audit.not_found')}</div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Тип события</TableHead>
-                  <TableHead>Tenant</TableHead>
-                  <TableHead>Пользователь</TableHead>
-                  <TableHead>Детали</TableHead>
-                  <TableHead>Время</TableHead>
+                  <TableHead>{t('audit.col_event_type')}</TableHead>
+                  <TableHead>{t('audit.col_tenant')}</TableHead>
+                  <TableHead>{t('audit.col_user')}</TableHead>
+                  <TableHead>{t('audit.col_details')}</TableHead>
+                  <TableHead>{t('audit.col_time')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -85,7 +87,7 @@ export default function AuditPage() {
                     <TableCell className="text-sm text-slate-500">{event.userId ?? '—'}</TableCell>
                     <TableCell className="text-sm text-slate-500 max-w-xs truncate">{event.details ?? '—'}</TableCell>
                     <TableCell className="text-sm text-slate-400 whitespace-nowrap">
-                      {new Date(event.timestamp).toLocaleString('ru')}
+                      {new Date(event.timestamp).toLocaleString(i18n.language)}
                     </TableCell>
                   </motion.tr>
                 ))}

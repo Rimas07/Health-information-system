@@ -1,16 +1,19 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { LayoutDashboard, Users, FileText, Settings, LogOut } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
-
-const navItems = [
-  { to: '/dashboard', icon: LayoutDashboard, label: 'Дашборд' },
-  { to: '/patients', icon: Users, label: 'Пациенты' },
-  { to: '/audit', icon: FileText, label: 'Аудит' },
-  { to: '/limits', icon: Settings, label: 'Лимиты' },
-]
+import LanguageSwitcher from '@/components/ui/LanguageSwitcher'
 
 export default function AppLayout() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
+
+  const navItems = [
+    { to: '/dashboard', icon: LayoutDashboard, label: t('nav.dashboard') },
+    { to: '/patients', icon: Users, label: t('nav.patients') },
+    { to: '/audit', icon: FileText, label: t('nav.audit') },
+    { to: '/limits', icon: Settings, label: t('nav.limits') },
+  ]
 
   function logout() {
     localStorage.removeItem('access_token')
@@ -22,8 +25,8 @@ export default function AppLayout() {
     <div className="flex h-screen bg-slate-50">
       <aside className="w-64 bg-white border-r border-slate-200 flex flex-col">
         <div className="p-6 border-b border-slate-200">
-          <h1 className="text-xl font-bold text-slate-800">HIS System</h1>
-          <p className="text-xs text-slate-500 mt-1">Медицинская информационная система</p>
+          <h1 className="text-xl font-bold text-slate-800">{t('app.title')}</h1>
+          <p className="text-xs text-slate-500 mt-1">{t('app.subtitle')}</p>
         </div>
 
         <nav className="flex-1 p-4 space-y-1">
@@ -45,14 +48,15 @@ export default function AppLayout() {
           ))}
         </nav>
 
-        <div className="p-4 border-t border-slate-200">
+        <div className="p-4 border-t border-slate-200 space-y-2">
+          <LanguageSwitcher />
           <Button
             variant="ghost"
             className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50"
             onClick={logout}
           >
             <LogOut size={18} className="mr-2" />
-            Выйти
+            {t('nav.logout')}
           </Button>
         </div>
       </aside>

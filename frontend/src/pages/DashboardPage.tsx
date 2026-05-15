@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
 import { apiClient } from '@/api/client'
 import type { DashboardStats } from '@/types'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -33,6 +34,8 @@ function StatCard({ title, value, icon, delay }: {
 }
 
 export default function DashboardPage() {
+  const { t, i18n } = useTranslation()
+
   const { data: stats, isLoading } = useQuery<DashboardStats>({
     queryKey: ['stats'],
     queryFn: () => apiClient.get('/audit/stats').then(r => r.data),
@@ -42,7 +45,7 @@ export default function DashboardPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="text-slate-400 text-sm">Загрузка...</div>
+        <div className="text-slate-400 text-sm">{t('dashboard.loading')}</div>
       </div>
     )
   }
@@ -51,18 +54,18 @@ export default function DashboardPage() {
     <div className="p-8">
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800">Дашборд</h2>
-          <p className="text-slate-500 text-sm mt-1">Обзор системы в реальном времени</p>
+          <h2 className="text-2xl font-bold text-slate-800">{t('dashboard.title')}</h2>
+          <p className="text-slate-500 text-sm mt-1">{t('dashboard.subtitle')}</p>
         </div>
         <Badge variant={stats?.systemStatus === 'online' ? 'default' : 'destructive'}>
-          {stats?.systemStatus === 'online' ? '● Система работает' : '● Ошибка'}
+          {stats?.systemStatus === 'online' ? t('dashboard.system_online') : t('dashboard.system_error')}
         </Badge>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <StatCard title="Компании" value={stats?.totalTenants ?? 0} icon="🏢" delay={0} />
-        <StatCard title="Пациенты" value={stats?.totalPatients ?? 0} icon="👤" delay={0.1} />
-        <StatCard title="События аудита" value={stats?.totalAuditEvents ?? 0} icon="📋" delay={0.2} />
+        <StatCard title={t('dashboard.companies')} value={stats?.totalTenants ?? 0} icon="🏢" delay={0} />
+        <StatCard title={t('dashboard.patients')} value={stats?.totalPatients ?? 0} icon="👤" delay={0.1} />
+        <StatCard title={t('dashboard.audit_events')} value={stats?.totalAuditEvents ?? 0} icon="📋" delay={0.2} />
       </div>
 
       <motion.div
@@ -72,7 +75,7 @@ export default function DashboardPage() {
       >
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Последние события</CardTitle>
+            <CardTitle className="text-base">{t('dashboard.recent_events')}</CardTitle>
           </CardHeader>
           <CardContent>
             {stats?.recentEvents && stats.recentEvents.length > 0 ? (
@@ -87,13 +90,13 @@ export default function DashboardPage() {
                       <p className="text-xs text-slate-400">{event.tenantId}</p>
                     </div>
                     <p className="text-xs text-slate-400">
-                      {new Date(event.timestamp).toLocaleString('ru')}
+                      {new Date(event.timestamp).toLocaleString(i18n.language)}
                     </p>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-slate-400 text-center py-4">Нет событий</p>
+              <p className="text-sm text-slate-400 text-center py-4">{t('dashboard.no_events')}</p>
             )}
           </CardContent>
         </Card>

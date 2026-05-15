@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import { Plus, Search, Pencil, Trash2 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { apiClient } from '@/api/client'
 import type { Patient } from '@/types'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -19,6 +20,7 @@ interface PatientForm {
 const empty: PatientForm = { name: '', surname: '', age: '' }
 
 export default function PatientsPage() {
+  const { t } = useTranslation()
   const qc = useQueryClient()
   const [search, setSearch] = useState('')
   const [showForm, setShowForm] = useState(false)
@@ -92,19 +94,19 @@ export default function PatientsPage() {
     <div className="p-8">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800">Пациенты</h2>
-          <p className="text-slate-500 text-sm mt-1">Управление записями пациентов</p>
+          <h2 className="text-2xl font-bold text-slate-800">{t('patients.title')}</h2>
+          <p className="text-slate-500 text-sm mt-1">{t('patients.subtitle')}</p>
         </div>
         <Button onClick={openCreate}>
           <Plus size={16} className="mr-2" />
-          Добавить пациента
+          {t('patients.add')}
         </Button>
       </div>
 
       <div className="mb-4 relative">
         <Search size={16} className="absolute left-3 top-3 text-slate-400" />
         <Input
-          placeholder="Поиск по имени или фамилии..."
+          placeholder={t('patients.search')}
           value={search}
           onChange={e => setSearch(e.target.value)}
           className="pl-9"
@@ -120,31 +122,31 @@ export default function PatientsPage() {
           <Card>
             <CardHeader>
               <CardTitle className="text-base">
-                {editing ? 'Редактировать пациента' : 'Новый пациент'}
+                {editing ? t('patients.edit_title') : t('patients.new_title')}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <Label>Имя *</Label>
+                  <Label>{t('patients.label_name')}</Label>
                   <Input
-                    placeholder="Иван"
+                    placeholder="Ivan"
                     value={form.name}
                     onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Фамилия *</Label>
+                  <Label>{t('patients.label_surname')}</Label>
                   <Input
-                    placeholder="Иванов"
+                    placeholder="Ivanov"
                     value={form.surname}
                     onChange={e => setForm(f => ({ ...f, surname: e.target.value }))}
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Возраст *</Label>
+                  <Label>{t('patients.label_age')}</Label>
                   <Input
                     type="number"
                     placeholder="30"
@@ -155,9 +157,9 @@ export default function PatientsPage() {
                   />
                 </div>
                 <div className="col-span-3 flex gap-3 justify-end">
-                  <Button type="button" variant="outline" onClick={closeForm}>Отмена</Button>
+                  <Button type="button" variant="outline" onClick={closeForm}>{t('patients.cancel')}</Button>
                   <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
-                    {editing ? 'Сохранить' : 'Создать'}
+                    {editing ? t('patients.save') : t('patients.create')}
                   </Button>
                 </div>
               </form>
@@ -169,17 +171,17 @@ export default function PatientsPage() {
       <Card>
         <CardContent className="p-0">
           {isLoading ? (
-            <div className="text-center py-12 text-slate-400 text-sm">Загрузка...</div>
+            <div className="text-center py-12 text-slate-400 text-sm">{t('patients.loading')}</div>
           ) : filtered.length === 0 ? (
-            <div className="text-center py-12 text-slate-400 text-sm">Пациенты не найдены</div>
+            <div className="text-center py-12 text-slate-400 text-sm">{t('patients.not_found')}</div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Имя</TableHead>
-                  <TableHead>Фамилия</TableHead>
-                  <TableHead>Возраст</TableHead>
-                  <TableHead className="w-24">Действия</TableHead>
+                  <TableHead>{t('patients.col_name')}</TableHead>
+                  <TableHead>{t('patients.col_surname')}</TableHead>
+                  <TableHead>{t('patients.col_age')}</TableHead>
+                  <TableHead className="w-24">{t('patients.col_actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -193,7 +195,7 @@ export default function PatientsPage() {
                   >
                     <TableCell className="font-medium">{p.name}</TableCell>
                     <TableCell>{p.surname}</TableCell>
-                    <TableCell>{p.age} лет</TableCell>
+                    <TableCell>{p.age} {t('patients.age_years')}</TableCell>
                     <TableCell>
                       <div className="flex gap-2">
                         <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEdit(p)}>

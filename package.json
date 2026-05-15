@@ -2,6 +2,7 @@
   "name": "his-monorepo",
   "version": "1.0.0",
   "private": true,
+  
   "scripts": {
     "build": "npm ci --prefix frontend && npm run build --prefix frontend && npm ci --prefix His --include=dev && npm run build --prefix His",
     "start": "node His/dist/main",
