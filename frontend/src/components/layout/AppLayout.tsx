@@ -9,10 +9,10 @@ export default function AppLayout() {
   const { t } = useTranslation()
 
   const navItems = [
-    { to: '/dashboard', icon: LayoutDashboard, label: t('nav.dashboard') },
-    { to: '/patients', icon: Users, label: t('nav.patients') },
-    { to: '/audit', icon: FileText, label: t('nav.audit') },
-    { to: '/limits', icon: Settings, label: t('nav.limits') },
+    { to: '/dashboard', icon: LayoutDashboard, label: t('nav.dashboard'), color: 'text-blue-400' },
+    { to: '/patients', icon: Users, label: t('nav.patients'), color: 'text-emerald-400' },
+    { to: '/audit', icon: FileText, label: t('nav.audit'), color: 'text-violet-400' },
+    { to: '/limits', icon: Settings, label: t('nav.limits'), color: 'text-amber-400' },
   ]
 
   function logout() {
@@ -23,41 +23,59 @@ export default function AppLayout() {
 
   return (
     <div className="flex h-screen bg-slate-50">
-      <aside className="w-64 bg-white border-r border-slate-200 flex flex-col">
-        <div className="p-6 border-b border-slate-200">
-          <h1 className="text-xl font-bold text-slate-800">{t('app.title')}</h1>
-          <p className="text-xs text-slate-500 mt-1">{t('app.subtitle')}</p>
+      <aside className="w-64 bg-slate-900 flex flex-col">
+        {/* Logo */}
+        <div className="px-6 py-5 border-b border-slate-700/60">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 bg-blue-500 rounded-lg flex items-center justify-center text-lg shadow-lg shadow-blue-500/30 flex-shrink-0">
+              🏥
+            </div>
+            <div>
+              <h1 className="text-white font-bold text-sm leading-tight">{t('app.title')}</h1>
+              <p className="text-slate-400 text-xs mt-0.5 leading-tight">{t('app.subtitle')}</p>
+            </div>
+          </div>
         </div>
 
-        <nav className="flex-1 p-4 space-y-1">
-          {navItems.map(({ to, icon: Icon, label }) => (
+        {/* Nav */}
+        <nav className="flex-1 px-3 py-4 space-y-0.5">
+          {navItems.map(({ to, icon: Icon, label, color }) => (
             <NavLink
               key={to}
               to={to}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 group ${
                   isActive
-                    ? 'bg-slate-900 text-white'
-                    : 'text-slate-600 hover:bg-slate-100'
+                    ? 'bg-white/10 text-white'
+                    : 'text-slate-400 hover:bg-white/5 hover:text-white'
                 }`
               }
             >
-              <Icon size={18} />
-              {label}
+              {({ isActive }) => (
+                <>
+                  <Icon
+                    size={17}
+                    className={`flex-shrink-0 transition-colors ${isActive ? color : 'text-slate-500 group-hover:text-slate-300'}`}
+                  />
+                  {label}
+                </>
+              )}
             </NavLink>
           ))}
         </nav>
 
-        <div className="p-4 border-t border-slate-200 space-y-2">
-          <LanguageSwitcher />
-          <Button
-            variant="ghost"
-            className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50"
+        {/* Bottom */}
+        <div className="px-3 pb-4 border-t border-slate-700/60 pt-3 space-y-2">
+          <div className="px-3">
+            <LanguageSwitcher dark />
+          </div>
+          <button
             onClick={logout}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:bg-red-500/10 hover:text-red-400 transition-all"
           >
-            <LogOut size={18} className="mr-2" />
+            <LogOut size={17} className="flex-shrink-0" />
             {t('nav.logout')}
-          </Button>
+          </button>
         </div>
       </aside>
 
