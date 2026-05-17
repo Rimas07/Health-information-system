@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { motion } from 'framer-motion'
-import { Plus, Search, Pencil, Trash2 } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Plus, Search, Pencil, Trash2, Upload } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { apiClient } from '@/api/client'
 import type { Patient } from '@/types'
@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import ImportModal from '@/components/patients/ImportModal'
 
 interface PatientForm {
   name: string
@@ -24,6 +25,7 @@ export default function PatientsPage() {
   const qc = useQueryClient()
   const [search, setSearch] = useState('')
   const [showForm, setShowForm] = useState(false)
+  const [showImport, setShowImport] = useState(false)
   const [editing, setEditing] = useState<Patient | null>(null)
   const [form, setForm] = useState<PatientForm>(empty)
 
@@ -97,11 +99,26 @@ export default function PatientsPage() {
           <h2 className="text-2xl font-bold text-slate-800">{t('patients.title')}</h2>
           <p className="text-slate-500 text-sm mt-1">{t('patients.subtitle')}</p>
         </div>
-        <Button onClick={openCreate}>
-          <Plus size={16} className="mr-2" />
-          {t('patients.add')}
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setShowImport(true)}>
+            <Upload size={16} className="mr-2" />
+            {t('patients.import')}
+          </Button>
+          <Button onClick={openCreate}>
+            <Plus size={16} className="mr-2" />
+            {t('patients.add')}
+          </Button>
+        </div>
       </div>
+
+      <AnimatePresence>
+        {showImport && (
+          <ImportModal
+            onClose={() => setShowImport(false)}
+            onSuccess={() => qc.invalidateQueries({ queryKey: ['patients'] })}
+          />
+        )}
+      </AnimatePresence>
 
       <div className="mb-4 relative">
         <Search size={16} className="absolute left-3 top-3 text-slate-400" />
