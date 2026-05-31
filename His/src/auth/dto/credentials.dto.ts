@@ -9,7 +9,7 @@ export class LoginCredentialsDto {
     })// for swag descript
     @IsNotEmpty({ message: 'Email required' })// valid/ checks if email is not empty 
     @IsEmail({}, { message: 'Invalid email' })// valid/ email must contain @ otherwise will not proceed
-    email: string;
+    email!: string;
 
     @ApiProperty({
         description: 'User password (minimum 6 characters)',
@@ -19,7 +19,7 @@ export class LoginCredentialsDto {
     @IsNotEmpty({ message: 'Password required' })// valid/ checks if pass is not empty 
     @IsString({ message: 'Password must be string' })// valid/ checks if pass is string
     @MinLength(6, { message: 'Password must be at least 6 characters' })
-    password: string;
+    password!: string;
 }
 
 export class UpdateCredentialsDto extends PartialType(LoginCredentialsDto) { }

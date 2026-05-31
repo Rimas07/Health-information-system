@@ -21,12 +21,28 @@ apiClient.interceptors.request.use((config) => {
 
 apiClient.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('access_token')
+  async (error) => {
+    const originalRequest = error.config
+    
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true
+    }
+
+    try {
+      const response = await axios.post(`${BASE_URL}/auth/refresh`, {}, {
+        withCredentials:true
+      })
+      const newAccessToken = response.data.accessToken
+      localStorage.setItem('access_token', newAccessToken)
+
+      originalRequest.headers.Authorization = `Bearer ${newAccessToken}`
+      return apiClient(originalRequest)
+    } catch {
+      localStorage.removeItem('access_tojen')
       localStorage.removeItem('tenant_id')
       window.location.href = '/login'
     }
-    return Promise.reject(error)
+  
+  return Promise.reject(error)
   }
 )

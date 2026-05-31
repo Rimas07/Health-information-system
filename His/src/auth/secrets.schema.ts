@@ -4,7 +4,10 @@ import { Document } from 'mongoose';
 @Schema({ versionKey: false, timestamps: true })
 export class Secrets extends Document {
     @Prop({ required: true })
-    jwtSecret: string;
+    jwtSecret!: string;
+    @Prop({ required: false })
+    refreshToken!: string;
+
 }
 
 export const SecretsSchema = SchemaFactory.createForClass(Secrets);

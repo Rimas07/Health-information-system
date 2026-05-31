@@ -12,6 +12,8 @@ import type { AuthResponse } from '@/types'
 
 type Tab = 'login' | 'register'
 
+const VIDEO_URL = "/dna-bg.mp4";
+
 const features = [
   { icon: Shield, key: 'security' },
   { icon: Activity, key: 'realtime' },
@@ -39,6 +41,16 @@ const featureLabels: Record<string, Record<string, string>> = {
     audit: 'Kompletní protokol auditu',
   },
 }
+
+const titles: Record<string, string> = {
+  en: 'Modern Hospital\nInformation System',
+  ru: 'Современная медицинская\nинформационная система',
+  cs: 'Moderní nemocniční\ninformační systém',
+}
+
+const inputCls =
+  'h-11 bg-white/10 border border-white/20 text-white placeholder:text-white/35 ' +
+  'focus-visible:ring-white/20 focus-visible:border-white/50 rounded-xl'
 
 export default function LoginPage() {
   const navigate = useNavigate()
@@ -98,98 +110,131 @@ export default function LoginPage() {
     }
   }
 
-  const labels = featureLabels[i18n.language] ?? featureLabels['en']
+  const lang = i18n.language
+  const labels = featureLabels[lang] ?? featureLabels['en']
+  const titleText = titles[lang] ?? titles['en']
 
   return (
-    <div className="min-h-screen flex">
-      {/* Left branding panel */}
-      <div className="hidden lg:flex lg:w-5/12 bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 flex-col justify-between p-12 relative overflow-hidden">
-        {/* Background decoration */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-32 -left-32 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl" />
-          <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-blue-500/5 rounded-full blur-2xl" />
-        </div>
+    <div
+      className="relative h-screen overflow-hidden bg-black text-white"
+      style={{ fontFamily: "'Inter', sans-serif" }}
+    >
+      {/* ── Video background ── */}
+      <video
+        autoPlay loop muted playsInline
+        className="fixed inset-0 w-full h-full object-cover z-0"
+      >
+        <source src={VIDEO_URL} type="video/mp4" />
+      </video>
 
-        <div className="relative">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center text-xl shadow-lg shadow-blue-500/30">
+      {/* ── Dark overlay (uniform for form readability) ── */}
+      <div
+        className="fixed inset-0 z-[1] pointer-events-none"
+        style={{ background: 'linear-gradient(135deg, rgba(10,10,40,0.72) 0%, rgba(20,5,35,0.68) 100%)' }}
+      />
+
+      {/* ── Bottom blur accent ── */}
+      <div
+        className="fixed inset-0 z-[2] pointer-events-none"
+        style={{
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
+          WebkitMaskImage: 'linear-gradient(to top, black 0%, transparent 40%)',
+          maskImage: 'linear-gradient(to top, black 0%, transparent 40%)',
+        }}
+      />
+
+      {/* ── Main layout ── */}
+      <div className="relative z-10 h-full flex items-center justify-center lg:justify-between px-6 sm:px-10 lg:px-20 py-8 gap-12">
+
+        {/* ── Left branding (desktop only) ── */}
+        <div className="hidden lg:flex flex-col justify-center flex-1 max-w-xl">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="flex items-center gap-3 mb-10"
+          >
+            <div className="w-12 h-12 bg-white/15 rounded-2xl flex items-center justify-center text-2xl">
               🏥
             </div>
-            <span className="text-white font-bold text-xl">{t('app.title')}</span>
-          </div>
-          <p className="text-blue-300/70 text-sm">{t('app.subtitle')}</p>
-        </div>
+            <div>
+              <p className="text-white font-bold text-xl">{t('app.title')}</p>
+              <p className="text-white/45 text-sm">{t('app.subtitle')}</p>
+            </div>
+          </motion.div>
 
-        <div className="relative space-y-6">
-          <div>
-            <h2 className="text-white text-3xl font-bold leading-tight mb-3">
-              {i18n.language === 'ru' && 'Современная медицинская\nинформационная система'}
-              {i18n.language === 'en' && 'Modern Hospital\nInformation System'}
-              {i18n.language === 'cs' && 'Moderní nemocniční\ninformační systém'}
-            </h2>
-          </div>
-          <div className="space-y-3">
+          <motion.h2
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.2 }}
+            className="text-white text-5xl font-normal mb-10 whitespace-pre-line"
+            style={{ letterSpacing: '-0.03em', lineHeight: 1.1 }}
+          >
+            {titleText}
+          </motion.h2>
+
+          <div className="space-y-4">
             {features.map(({ icon: Icon, key }, i) => (
               <motion.div
                 key={key}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.1 * i, duration: 0.4 }}
+                transition={{ delay: 0.3 + i * 0.08, duration: 0.45 }}
                 className="flex items-center gap-3"
               >
-                <div className="w-8 h-8 bg-blue-500/20 border border-blue-400/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Icon size={15} className="text-blue-400" />
+                <div className="w-9 h-9 bg-white/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <Icon size={16} className="text-white/70" />
                 </div>
-                <span className="text-slate-300 text-sm">{labels[key]}</span>
+                <span className="text-white/65 text-sm">{labels[key]}</span>
               </motion.div>
             ))}
           </div>
+
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.9 }}
+            className="text-white/20 text-xs mt-16"
+          >
+            © 2026 HIS System
+          </motion.p>
         </div>
 
-        <p className="relative text-slate-600 text-xs">© 2026 HIS System</p>
-      </div>
-
-      {/* Right form panel */}
-      <div className="flex-1 bg-slate-50 flex flex-col items-center justify-center p-8">
+        {/* ── Glass form card ── */}
         <motion.div
-          initial={{ opacity: 0, y: 16 }}
+          initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
+          transition={{ duration: 0.5, delay: 0.15 }}
           className="w-full max-w-md"
         >
-          {/* Mobile logo */}
-          <div className="lg:hidden text-center mb-8">
-            <div className="text-4xl mb-2">🏥</div>
-            <h1 className="text-2xl font-bold text-slate-800">{t('app.title')}</h1>
-            <p className="text-slate-500 text-sm">{t('login.subtitle')}</p>
-          </div>
+          <div className="liquid-glass-strong rounded-3xl p-8">
 
-          <div className="bg-white rounded-2xl shadow-xl shadow-slate-200/80 border border-slate-100 p-8">
-            <div className="flex items-center justify-between mb-6">
+            {/* Card header */}
+            <div className="flex items-center justify-between mb-7">
               <div>
-                <h2 className="text-xl font-bold text-slate-800">
+                <h2 className="text-white text-xl font-semibold">
                   {tab === 'login' ? t('login.tab_login') : t('login.tab_register')}
                 </h2>
-                <p className="text-slate-400 text-sm mt-0.5">
+                <p className="text-white/45 text-sm mt-0.5">
                   {tab === 'login'
-                    ? (i18n.language === 'ru' ? 'Введите ваши данные' : i18n.language === 'cs' ? 'Zadejte své údaje' : 'Enter your credentials')
-                    : (i18n.language === 'ru' ? 'Создайте организацию' : i18n.language === 'cs' ? 'Vytvořte organizaci' : 'Create your organization')}
+                    ? (lang === 'ru' ? 'Введите ваши данные' : lang === 'cs' ? 'Zadejte své údaje' : 'Enter your credentials')
+                    : (lang === 'ru' ? 'Создайте организацию' : lang === 'cs' ? 'Vytvořte organizaci' : 'Create your organization')}
                 </p>
               </div>
               <LanguageSwitcher />
             </div>
 
             {/* Tab switcher */}
-            <div className="flex rounded-xl bg-slate-100 p-1 mb-6 gap-1">
+            <div className="flex rounded-xl bg-white/10 p-1 mb-6 gap-1">
               {(['login', 'register'] as Tab[]).map((t_tab) => (
                 <button
                   key={t_tab}
                   onClick={() => setTab(t_tab)}
                   className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
                     tab === t_tab
-                      ? 'bg-white text-slate-800 shadow-sm'
-                      : 'text-slate-500 hover:text-slate-700'
+                      ? 'bg-white/20 text-white'
+                      : 'text-white/45 hover:text-white/70'
                   }`}
                 >
                   {t_tab === 'login' ? t('login.tab_login') : t('login.tab_register')}
@@ -197,6 +242,7 @@ export default function LoginPage() {
               ))}
             </div>
 
+            {/* Forms */}
             <AnimatePresence mode="wait">
               {tab === 'login' ? (
                 <motion.form
@@ -209,26 +255,30 @@ export default function LoginPage() {
                   className="space-y-4"
                 >
                   <div className="space-y-1.5">
-                    <Label htmlFor="email" className="text-slate-700 font-medium">{t('login.email')}</Label>
+                    <Label htmlFor="email" className="text-white/75 font-medium text-sm">
+                      {t('login.email')}
+                    </Label>
                     <Input
                       id="email"
                       type="email"
                       placeholder="admin@hospital.com"
                       value={loginEmail}
                       onChange={(e) => setLoginEmail(e.target.value)}
-                      className="h-11 border-slate-200 focus:border-blue-400 focus:ring-blue-400/20"
+                      className={inputCls}
                       required
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label htmlFor="password" className="text-slate-700 font-medium">{t('login.password')}</Label>
+                    <Label htmlFor="password" className="text-white/75 font-medium text-sm">
+                      {t('login.password')}
+                    </Label>
                     <Input
                       id="password"
                       type="password"
                       placeholder="••••••••"
                       value={loginPassword}
                       onChange={(e) => setLoginPassword(e.target.value)}
-                      className="h-11 border-slate-200 focus:border-blue-400 focus:ring-blue-400/20"
+                      className={inputCls}
                       required
                     />
                   </div>
@@ -236,15 +286,15 @@ export default function LoginPage() {
                     <motion.div
                       initial={{ opacity: 0, y: -4 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="flex items-center gap-2 text-sm text-red-600 bg-red-50 border border-red-100 px-3 py-2.5 rounded-lg"
+                      className="flex items-center gap-2 text-sm text-red-300 bg-red-500/15 border border-red-400/20 px-3 py-2.5 rounded-xl"
                     >
-                      <span className="text-base">⚠️</span>
+                      <span>⚠️</span>
                       {loginError}
                     </motion.div>
                   )}
                   <Button
                     type="submit"
-                    className="w-full h-11 bg-slate-900 hover:bg-slate-700 text-white font-medium rounded-xl mt-2 transition-all"
+                    className="w-full h-11 bg-white text-slate-900 font-semibold rounded-xl mt-2 hover:bg-white/90 transition-all"
                     disabled={loginLoading}
                   >
                     {loginLoading ? (
@@ -269,52 +319,60 @@ export default function LoginPage() {
                   className="space-y-4"
                 >
                   <div className="space-y-1.5">
-                    <Label htmlFor="company" className="text-slate-700 font-medium">{t('login.company')}</Label>
+                    <Label htmlFor="company" className="text-white/75 font-medium text-sm">
+                      {t('login.company')}
+                    </Label>
                     <Input
                       id="company"
                       placeholder="City Hospital"
                       value={regCompany}
                       onChange={(e) => setRegCompany(e.target.value)}
-                      className="h-11 border-slate-200"
+                      className={inputCls}
                       minLength={2}
                       maxLength={15}
                       required
                     />
-                    <p className="text-xs text-slate-400">{t('login.company_hint')}</p>
+                    <p className="text-xs text-white/35">{t('login.company_hint')}</p>
                   </div>
                   <div className="space-y-1.5">
-                    <Label htmlFor="reg-name" className="text-slate-700 font-medium">{t('login.your_name')}</Label>
+                    <Label htmlFor="reg-name" className="text-white/75 font-medium text-sm">
+                      {t('login.your_name')}
+                    </Label>
                     <Input
                       id="reg-name"
                       placeholder="Ivan Ivanov"
                       value={regName}
                       onChange={(e) => setRegName(e.target.value)}
-                      className="h-11 border-slate-200"
+                      className={inputCls}
                       minLength={2}
                       required
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label htmlFor="reg-email" className="text-slate-700 font-medium">{t('login.admin_email')}</Label>
+                    <Label htmlFor="reg-email" className="text-white/75 font-medium text-sm">
+                      {t('login.admin_email')}
+                    </Label>
                     <Input
                       id="reg-email"
                       type="email"
                       placeholder="admin@hospital.com"
                       value={regEmail}
                       onChange={(e) => setRegEmail(e.target.value)}
-                      className="h-11 border-slate-200"
+                      className={inputCls}
                       required
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label htmlFor="reg-password" className="text-slate-700 font-medium">{t('login.password')}</Label>
+                    <Label htmlFor="reg-password" className="text-white/75 font-medium text-sm">
+                      {t('login.password')}
+                    </Label>
                     <Input
                       id="reg-password"
                       type="password"
                       placeholder={t('login.min_password')}
                       value={regPassword}
                       onChange={(e) => setRegPassword(e.target.value)}
-                      className="h-11 border-slate-200"
+                      className={inputCls}
                       minLength={6}
                       required
                     />
@@ -323,9 +381,9 @@ export default function LoginPage() {
                     <motion.div
                       initial={{ opacity: 0, y: -4 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="flex items-center gap-2 text-sm text-red-600 bg-red-50 border border-red-100 px-3 py-2.5 rounded-lg"
+                      className="flex items-center gap-2 text-sm text-red-300 bg-red-500/15 border border-red-400/20 px-3 py-2.5 rounded-xl"
                     >
-                      <span className="text-base">⚠️</span>
+                      <span>⚠️</span>
                       {regError}
                     </motion.div>
                   )}
@@ -333,15 +391,15 @@ export default function LoginPage() {
                     <motion.div
                       initial={{ opacity: 0, y: -4 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="flex items-center gap-2 text-sm text-green-700 bg-green-50 border border-green-100 px-3 py-2.5 rounded-lg"
+                      className="flex items-center gap-2 text-sm text-green-300 bg-green-500/15 border border-green-400/20 px-3 py-2.5 rounded-xl"
                     >
-                      <span className="text-base">✅</span>
+                      <span>✅</span>
                       {regSuccess}
                     </motion.div>
                   )}
                   <Button
                     type="submit"
-                    className="w-full h-11 bg-slate-900 hover:bg-slate-700 text-white font-medium rounded-xl mt-2 transition-all"
+                    className="w-full h-11 bg-white text-slate-900 font-semibold rounded-xl mt-2 hover:bg-white/90 transition-all"
                     disabled={regLoading}
                   >
                     {regLoading ? (
@@ -359,6 +417,7 @@ export default function LoginPage() {
             </AnimatePresence>
           </div>
         </motion.div>
+
       </div>
     </div>
   )

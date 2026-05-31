@@ -56,21 +56,42 @@ export class AuthService {
             },
             { secret: secretKey, expiresIn: '15m' }
         );
-        return { accessToken, tenantId: user.tenantId }
-        //     // Return user info and token
-        //     return {
-        //         tenantId: user.tenantId,
-        //         access_token,
-        //         user: {
-        //             _id: user._id,
-        //             email: user.email,
-        //             tenantId: user.tenantId
-        //         }
-        //     };
-        // }
+        const refreshToken = await this.jwtService.sign(
+            {
+
+                userId: user._id,
+                tenantId: user.tenantId
+            },
+            { secret: secretKey, expiresIn: '7d' }
+        );
+
+    const SecretsModel = await this.tenantConnectionService.getTenantModel(
+        {
+        name: Secrets.name,
+        schema:SecretsSchema
+        },
+            user.tenantId,
+    );
+        await SecretsModel.findOneAndUpdate(
+            {},
+            { refreshToken: refreshToken },
+            { new: true }
+        );
+        
+        return { accessToken, refreshToken, tenantId: user.tenantId } as {
+            accessToken: string;
+            refreshToken: string;
+            tenantId: string;
+        }
+   
 
     }
-
+/* 1. accessToken  → живёт 15 минут → для каждого запроса
+2. refreshToken → живёт 7 дней  → для обновления accessToken
+3. getTenantModel → подключаемся к БД конкретного тенанта
+4. findOneAndUpdate({}) → берём единственный документ и обновляем refreshToken в базе
+5. return → отдаём оба токена фронтенду
+  */
 
     async createSecretKeyForNewTenant(tenantId: string) {
         //Generate Random Secret Key via nanoid which is lib for creating unique id
@@ -100,7 +121,47 @@ export class AuthService {
         
         await SecretsModel.create({ jwtSecret: encryptedSecret });
     }
+    
+    async refreshToken(refreshToken: string) {
+        const decoded = this.jwtService.decode(refreshToken) as any;
+        if (!decoded || !decoded.userId) {
+            throw new UnauthorizedException('Invalid refresh token');
+        }
 
+        const user = await this.usersService.getUserById(decoded.userId);
+            if(!user){
+            throw new UnauthorizedException('user not found')
+            }
+        const SecretsModel = await this.tenantConnectionService.getTenantModel(
+
+            { name: Secrets.name, schema: SecretsSchema },
+            user.tenantId,
+        );
+
+        const secretDoc = await SecretsModel.findOne();
+        if (secretDoc.refreshToken !== refreshToken) {
+            throw new UnauthorizedException('Refresh Token mismathc')
+        }
+
+        const secretKey = await this.fetchAccessTokenSecretSigningKey(user.tenantId);
+        const accessToken = this.jwtService.sign(
+
+
+            { userId: user._id, tenantId: user.tenantId },
+            { secret: secretKey, expiresIn: '15m' }
+        );
+        const newRefreshToken = this.jwtService.sign(
+            { userId: user._id, tenantId: user.tenantId },
+            { secret: secretKey, expiresIn: '7d' }
+        );
+        await SecretsModel.findOneAndUpdate(
+            {},
+            { refreshToken: newRefreshToken },
+            { new: true }
+        );
+        return {accessToken, refreshToken}
+}
+ 
     async fetchAccessTokenSecretSigningKey(tenantId: string) {
         const SecretsModel = await this.tenantConnectionService.getTenantModel(
             {
@@ -164,3 +225,14 @@ ConfigService - настройки
 nanoid -  генератор случайных строк
 encrypt/decrypt — шифрование/расшифровка
 */
+//     // Return user info and token
+//     return {
+//         tenantId: user.tenantId,
+//         access_token,
+//         user: {
+//             _id: user._id,
+//             email: user.email,
+//             tenantId: user.tenantId
+//         }
+//     };
+// }
