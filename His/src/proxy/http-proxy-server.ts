@@ -11,6 +11,7 @@ import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
 import { MonitoringService } from '../monitoring/monitoring.service';
 import { register } from 'prom-client';
+import logger from '../config/logger';
 
 export class HttpProxyServer {
     private app: express.Application;
@@ -74,7 +75,7 @@ export class HttpProxyServer {
             let statusCode = 500;
 
             try {
-                console.log('🔄 [HTTP Proxy] Request intercepted:', req.method, req.originalUrl || req.url);
+                logger.info({ action: 'proxy_request', method: req.method, path: req.originalUrl || req.url });
 
                 const authResult = await this.checkAuthentication(req);
                 if (!authResult.success || !authResult.tenantId) {
@@ -99,7 +100,8 @@ export class HttpProxyServer {
                 res.json(mongoResponse);
 
             } catch (error) {
-                console.error('❌ [HTTP Proxy] Error:', error);
+                logger.error({ action: 'proxy_error', error: (error as Error).message });
+
                 statusCode = (error as any).status || 500;
                 await this.logRequest(req, tenantId, null, startTime, statusCode);
                 res.status(statusCode).json({
@@ -169,7 +171,8 @@ export class HttpProxyServer {
                 return { success: false, error: 'X-TENANT-ID header does not match token tenantId' };
             }
 
-            console.log(`🔍 [Proxy] JWT validated, tenantId: ${validationResult.tenantId}`);
+            logger.info({ action: 'jwt_validated', tenantId: validationResult.tenantId });
+
             return {
                 success: true,
                 tenantId: validationResult.tenantId,
@@ -177,7 +180,7 @@ export class HttpProxyServer {
                 source: 'jwt-token'
             };
         } catch (error) {
-            console.error('❌ [Proxy] Authentication error:', error);
+            logger.error({ action: 'auth_error', error: (error as Error).message });
             return { success: false, error: `Authentication failed: ${(error as Error).message}` };
         }
     }

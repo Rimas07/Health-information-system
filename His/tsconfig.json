@@ -13,17 +13,15 @@
     "sourceMap": true,
     "outDir": "./dist",
     "rootDir": "./src",
-    "paths": {
-      "src/*": ["./src/*"]
-    },
+    "baseUrl": "./",
+    
     "incremental": true,
     "skipLibCheck": true,
     "strictNullChecks": true,
     "forceConsistentCasingInFileNames": true,
     "noImplicitAny": false,
     "strictBindCallApply": false,
-    "noFallthroughCasesInSwitch": false,
-     "types": ["jest"]
+    "noFallthroughCasesInSwitch": false
   },
   "exclude": ["node_modules", "dist", "test", "**/*.spec.ts"]
 }
