@@ -1,8 +1,7 @@
 /* eslint-disable prettier/prettier */
 
 export default () => {
-    console.log('[Config] DEBUG - process.env.RABBITMQ_URL:', process.env.RABBITMQ_URL);
-    console.log('[Config] DEBUG - All RabbitMQ env vars:', Object.keys(process.env).filter(k => k.includes('RABBIT')));
+   
 
     const config = {
         server: {
@@ -22,11 +21,7 @@ export default () => {
         },
     };
 
-    console.log('[Config] Loading configuration:', {
-        rabbitmq: config.rabbitmq,
-        database: config.database.connectionString,
-        port: config.server.port,
-    });
+   
 
     return config;
 };

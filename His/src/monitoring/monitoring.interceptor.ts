@@ -7,6 +7,7 @@ import {
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { MonitoringService } from './monitoring.service';
+import logger from 'src/config/logger'
 
 @Injectable()
 export class MonitoringInterceptor implements NestInterceptor {
@@ -47,13 +48,8 @@ export class MonitoringInterceptor implements NestInterceptor {
                     const statusCode = error.status || 500;
                    
                     if (statusCode >= 500) {
-                        console.error('❌ [Monitoring] Server error:', {
-                            tenantId,
-                            method,
-                            path,
-                            statusCode,
-                            duration,
-                        });
+                        logger.error({ action: 'MonitoringInterceptor', tenantId, method, path, statusCode, duration })
+
                     }
                     this.monitoringService.recordRequest(
                         tenantId,

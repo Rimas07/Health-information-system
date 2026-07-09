@@ -9,6 +9,7 @@ import { TenantConnectionService } from '../services/tenant-connection.service';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
 import { MonitoringService } from '../monitoring/monitoring.service';
+import logger from '../config/logger'
 
 @Injectable()
 export class ProxyService {
@@ -42,7 +43,8 @@ export class ProxyService {
 
     public startProxyServer(port: number = 3001) {
         this.httpProxyServer.start(port);
-        console.log('🚀 [ProxyService] HTTP Proxy server is running!');
+        logger.info({ action: 'startProxyServer', message: 'HTTP Proxy server is running' })
+
     }
 
     public getProxyApp() {
@@ -143,7 +145,8 @@ export class ProxyService {
             };
 
         } catch (error) {
-            console.error('❌ [ProxyService] Error processing request:', error);
+            logger.error({ action: 'processRequest', error: (error as Error).message })
+
             throw error;
         }
     }

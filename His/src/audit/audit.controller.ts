@@ -7,6 +7,7 @@ import { TenantsService } from 'src/tenants/tenants.service';
 import { InjectConnection } from '@nestjs/mongoose';
 import { Connection } from 'mongoose';
 import { Patient, PatientSchema } from 'src/patients/patient.schema';
+import logger from 'src/config/logger'
 
 @Controller('audit')
 export class AuditController {
@@ -47,7 +48,8 @@ export class AuditController {
                 
                 } catch (error) {
                 
-                    console.error(`❌ Error counting patients for tenant ${tenant.tenantId}:`, (error as Error).message);
+                    logger.error({ action: 'getSystemStats', tenantId: tenant.tenantId, error: (error as Error).message })
+
                 }
             }
 

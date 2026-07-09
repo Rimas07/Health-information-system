@@ -4,6 +4,7 @@ import type { Request, Response } from 'express';
 import { ProxyService } from './proxy.service';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { TenantAuthenticationGuard } from 'src/guards/tenant-auth.guard';
+import logger from 'src/config/logger'
 
 export const IS_PUBLIC_KEY = 'isPublic';
 export const Public = () => SetMetadata(IS_PUBLIC_KEY, true);
@@ -39,17 +40,18 @@ export class ProxyController {
     })
     async proxyToMongoDB(@Req() req: Request, @Res() res: Response, @Body() body: any) {
         try {
-            console.log('🔄 [ProxyController] Intercepted request to MongoDB:', req.method, req.path);
+            logger.info({ action: 'proxyToMongoDB', method: req.method, path: req.path })
+
 
             
             await this.proxyService.handleProxyRequest(req, res);
 
         } catch (error) {
-            console.error('❌ [ProxyController] error:', error);
+            logger.error({ action: 'proxyToMongoDB', error: (error as Error).message })
             res.status(500).json({
                 success: false,
                 error: 'Proxy controller error',
-                message: error.message
+                message: (error as Error).message
             });
         }
     }
@@ -61,17 +63,18 @@ export class ProxyController {
     })
     async proxyToMongoDBGet(@Req() req: Request, @Res() res: Response) {
         try {
-            console.log('🔄 [ProxyController] Intercepted GET request to MongoDB:', req.method, req.path);
+            logger.info({ action: 'proxyToMongoDBGet', method: req.method, path: req.path })
+
 
            
             await this.proxyService.handleProxyRequest(req, res);
 
         } catch (error) {
-            console.error('❌ [ProxyController] error:', error);
+            logger.error({ action: 'proxyToMongoDBGet', error: (error as Error).message })
             res.status(500).json({
                 success: false,
                 error: 'Proxy controller error',
-                message: error.message
+                message: (error as Error).message
             });
         }
     }
@@ -87,15 +90,13 @@ export class ProxyController {
     })
     async testProxy(@Req() req: Request) {
         try {
-            console.log('\n═══════════════════════════════════════');
-            console.log('🔍 THE PROXY TEST HAS STARTED');
-            console.log('═══════════════════════════════════════\n');
+            logger.info({ action: 'testProxy', message: 'Proxy test started' })
+
 
             const result = await this.proxyService.processRequest(req);
 
-            console.log('\n═══════════════════════════════════════');
-            console.log('✅ PROXY TEST COMPLETED SUCCESSFULLY');
-            console.log('═══════════════════════════════════════\n');
+            logger.info({ action: 'testProxy', message: 'Proxy test completed successfully' })
+
 
             return {
                 success: true,
@@ -104,14 +105,13 @@ export class ProxyController {
                 timestamp: new Date().toISOString()
             };
         } catch (error) {
-            console.log('\n═══════════════════════════════════════');
-            console.log('❌ PROXY TEST FAILED');
-            console.log('═══════════════════════════════════════\n');
+            logger.info({ action: 'testProxy', message: 'Proxy test failed' })
+
 
             return {
                 success: false,
-                error: error.message,
-                details: error.stack,
+                error: (error as Error).message,
+                details: (error as Error).stack,
                 timestamp: new Date().toISOString()
             };
         }
@@ -138,7 +138,7 @@ export class ProxyController {
             return {
                 success: false,
                 error: 'Failed to start proxy server',
-                message: error.message
+                message: (error as Error).message
             };
         }
     }

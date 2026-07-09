@@ -8,6 +8,7 @@ import { AuditEventSchema } from './audit.schema';
 import { AuditController } from './audit.controller';
 import { TenantsModule } from 'src/tenants/tenants.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import logger from 'src/config/logger'
 
 @Module({
     imports: [
@@ -24,7 +25,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
                     
                     
                     if (!rabbitmqUrl || rabbitmqUrl.includes('localhost')) {
-                        console.log('[AuditModule] RabbitMQ URL not configured or is localhost, RabbitMQ will be optional');
+                        logger.info({ action: 'AuditModule', message: 'RabbitMQ not configured or is localhost, will be optional' })
+
                         return {
                             transport: Transport.RMQ,
                             options: {

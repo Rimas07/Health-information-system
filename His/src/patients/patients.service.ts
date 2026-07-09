@@ -4,6 +4,7 @@ import { LimitsService } from 'src/limits/limits.service';
 import { Connection, Model } from 'mongoose';
 import { Patient, PatientSchema } from './patient.schema';
 import { CreatePatientDto, UpdatePatientDto } from './patient.dto';
+import logger from 'src/config/logger'
 
 @Injectable()
 export class PatientsService {
@@ -18,9 +19,12 @@ export class PatientsService {
             const PatientModel = tenantConnection.model(Patient.name, PatientSchema);
             return await PatientModel.find();
         } catch (error) {
-            console.error(`Error fetching patients for tenant ${tenantId}:`, error);
+            logger.error({ action: 'getPatients', tenantId, error: (error as Error).message })
+
+
             throw new InternalServerErrorException(
-                `Failed to fetch patients: ${error.message}`
+                `Failed to fetch patients: ${(error as Error).message}`
+
             );
         }
     }
@@ -40,7 +44,8 @@ export class PatientsService {
             await this.limitsService.checkDocumentsLimit(tenantId, 1, context);
             await this.limitsService.checkDataSizeLimit(tenantId, estimatedSizeKB, context);
         } catch (error) {
-            console.error('Limits check failed:', error.message);
+            logger.error({ action: 'createPatient', error: (error as Error).message })
+
             throw error;
         }
         const tenantDb = this.tenantConnection.useDb(`tenant_${tenantId}`);

@@ -9,6 +9,7 @@ import * as bcrypt from 'bcrypt';
 import { decrypt } from 'src/utils/decrypt';
 import { LoginCredentialsDto } from './dto/credentials.dto';
 import { JwtService } from '@nestjs/jwt';
+import logger from '../config/logger'
 
 @Injectable()
 export class AuthService {
@@ -208,10 +209,13 @@ export class AuthService {
                 }
             };
         } catch (error) {
-            console.error('JWT validation error:', error.message);
+            logger.error({ action: 'validateToken', error: (error as Error).message })
+
+
             return {
                 success: false,
-                error: error.message.includes('expired') ? 'Token expired' : 'Invalid token'
+                error: (error as Error).message.includes('expired') ? 'Token expired' : 'Invalid token'
+
             };
         }
     }
